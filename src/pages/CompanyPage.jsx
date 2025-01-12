@@ -5,14 +5,33 @@ import JobList from "../components/JobList";
 
 function CompanyPage() {
   const { companyId } = useParams();
-  const [company, setCompany] = useState();
+  const [companyData, setCompanyData] = useState({
+    company: null,
+    loading: true,
+    error: false,
+  });
 
   useEffect(() => {
-    if (companyId) getCompanyById(companyId).then(setCompany);
+    (async () => {
+      try {
+        const company = await getCompanyById(companyId);
+        setCompanyData({
+          company,
+          loading: false,
+          error: false,
+        });
+      } catch {
+        setCompanyData({
+          company: null,
+          loading: false,
+          error: true,
+        });
+      }
+    })();
   }, [companyId]);
-
-  if (!company) return null;
-
+  const { company, loading, error } = companyData;
+  if (loading) return <h2>Loading...</h2>;
+  if (error) return <h2 className="has-text-danger">Data Unavailable</h2>;
   return (
     <div>
       <h1 className="title">{company.name}</h1>
