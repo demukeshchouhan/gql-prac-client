@@ -1,14 +1,28 @@
-import { gql, GraphQLClient } from "graphql-request";
 import { getAccessToken } from "../auth";
+import {
+  ApolloClient,
+  ApolloLink,
+  InMemoryCache,
+  createHttpLink,
+  gql,
+  concat,
+} from "@apollo/client";
 
-const client = new GraphQLClient("http://localhost:9000/graphql", {
-  headers: () => {
-    const accessToken = getAccessToken();
-    if (accessToken) {
-      return { Authorization: `Bearer ${accessToken}` };
-    }
-    return {};
-  },
+const URI = "http://localhost:9000/graphql";
+const httpLink = createHttpLink({ uri: URI });
+
+const customLink = new ApolloLink((operation, forward) => {
+  console.log({ operation });
+  const accessToken = getAccessToken();
+  if (accessToken) {
+    operation.setContext({ Authorization: `Bearer ${accessToken}` });
+  }
+  return forward(operation);
+});
+
+const apolloClient = new ApolloClient({
+  link: concat(customLink, httpLink),
+  cache: new InMemoryCache(),
 });
 
 export async function getJobs() {
@@ -27,7 +41,7 @@ export async function getJobs() {
       }
     }
   `;
-  const data = await client.request(query);
+  const { data } = await apolloClient.query({ query });
   return data.jobs;
 }
 
@@ -46,7 +60,7 @@ export async function getJobById(id) {
       }
     }
   `;
-  const data = await client.request(query, { id });
+  const { data } = await apolloClient.query({ query, variables: { id } });
   return data.job;
 }
 
@@ -66,7 +80,7 @@ export async function getCompanyById(id) {
       }
     }
   `;
-  const data = await client.request(query, { id });
+  const { data } = await apolloClient.query({ query, variables: { id } });
   return data.company;
 }
 
@@ -78,11 +92,13 @@ export async function createJob({ title, description }) {
       }
     }
   `;
-
-  const data = await client.request(mutation, {
-    input: {
-      title,
-      description,
+  const { data } = await apolloClient.mutate({
+    mutation,
+    variables: {
+      input: {
+        title,
+        description,
+      },
     },
   });
   return data.job;
