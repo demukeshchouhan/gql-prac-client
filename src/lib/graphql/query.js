@@ -47,43 +47,6 @@ const jobDetailFragment = gql`
   }
 `;
 
-export async function getJobs() {
-  const query = gql`
-    query GetJobs {
-      jobs {
-        id
-        date
-        title
-        company {
-          id
-          name
-        }
-      }
-    }
-  `;
-  const { data } = await apolloClient.query({
-    query,
-    fetchPolicy: "network-only",
-  });
-  return data.jobs;
-}
-
-const jobByIdQuery = gql`
-  query JobById($id: ID!) {
-    job(id: $id) {
-      ...JobDetails
-    }
-  }
-  ${jobDetailFragment}
-`;
-export async function getJobById(id) {
-  const { data } = await apolloClient.query({
-    query: jobByIdQuery,
-    variables: { id },
-  });
-  return data.job;
-}
-
 export const companyByIdQuery = gql`
   query GetComapnyById($id: ID!) {
     company(id: $id) {
@@ -98,39 +61,35 @@ export const companyByIdQuery = gql`
     }
   }
 `;
-export async function getCompanyById(id) {
-  const { data } = await apolloClient.query({
-    query: companyByIdQuery,
-    variables: { id },
-  });
-  return data.company;
-}
 
-export async function createJob({ title, description }) {
-  const mutation = gql`
-    mutation CreateJob($input: CreateJobInput!) {
-      job: createJob(input: $input) {
-        ...JobDetails
+export const jobQuery = gql`
+  query GetJobs {
+    jobs {
+      id
+      date
+      title
+      company {
+        id
+        name
       }
     }
-    ${jobDetailFragment}
-  `;
-  const { data } = await apolloClient.mutate({
-    mutation,
-    variables: {
-      input: {
-        title,
-        description,
-      },
-    },
-    update: (cache, { data: updatedData }) => {
-      console.log({ updatedData });
-      cache.writeQuery({
-        query: jobByIdQuery,
-        variables: { id: updatedData.job.id },
-        data: updatedData,
-      });
-    },
-  });
-  return data.job;
-}
+  }
+`;
+
+export const jobByIdQuery = gql`
+  query JobById($id: ID!) {
+    job(id: $id) {
+      ...JobDetails
+    }
+  }
+  ${jobDetailFragment}
+`;
+
+export const createJobMutation = gql`
+  mutation CreateJob($input: CreateJobInput!) {
+    job: createJob(input: $input) {
+      ...JobDetails
+    }
+  }
+  ${jobDetailFragment}
+`;

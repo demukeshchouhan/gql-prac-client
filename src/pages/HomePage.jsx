@@ -1,16 +1,12 @@
-import { useEffect, useState } from "react";
 import JobList from "../components/JobList";
-import { getJobs } from "../lib/graphql/query";
+import { jobQuery } from "../lib/graphql/query";
+import { useQuery } from "@apollo/client";
 
 function HomePage() {
-  const [jobs, setJobs] = useState([]);
+  const { data } = useQuery(jobQuery);
+  const { jobs } = data ?? [];
 
-  useEffect(() => {
-    getJobs().then(setJobs);
-  }, []);
-
-  console.log(jobs);
-  if (jobs.length > 0)
+  if (jobs?.length > 0)
     return (
       <div>
         <h1 className="title">Job Board</h1>

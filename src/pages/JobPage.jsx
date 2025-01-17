@@ -1,17 +1,16 @@
 import { useParams } from "react-router";
 import { Link } from "react-router-dom";
 import { formatDate } from "../lib/formatters";
-import { useEffect, useState } from "react";
-import { getJobById } from "../lib/graphql/query";
+import { useQuery } from "@apollo/client";
+import { jobByIdQuery } from "../lib/graphql/query";
 
 function JobPage() {
-  const [job, setJob] = useState();
   const { jobId } = useParams();
-  useEffect(() => {
-    getJobById(jobId).then(setJob);
-  }, [jobId]);
-  console.log({ job });
-  if (!job) return <></>;
+  const { data } = useQuery(jobByIdQuery, { variables: { id: jobId } });
+  const { job } = data || {};
+
+  if (!job) return null;
+
   return (
     <div>
       <h1 className="title is-2">{job.title}</h1>
