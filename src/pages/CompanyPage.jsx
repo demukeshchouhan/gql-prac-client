@@ -9,7 +9,6 @@ function CompanyPage() {
     variables: { id: companyId },
   });
 
-  console.log({ data, loading, error });
   const { company } = data ?? {};
   if (loading) return <h2>Loading...</h2>;
   if (error) return <h2 className="has-text-danger">Data Unavailable</h2>;
