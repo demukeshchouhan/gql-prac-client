@@ -1,3 +1,4 @@
+import { getMainDefinition } from "@apollo/client/utilities";
 import { getAccessToken } from "../auth";
 import {
   ApolloClient,
@@ -6,12 +7,13 @@ import {
   createHttpLink,
   gql,
   concat,
+  split,
 } from "@apollo/client";
+import { Kind, OperationTypeNode } from "graphql";
+import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { createClient as createWsClient } from "graphql-ws";
 
-const URI = "http://localhost:9000/graphql";
-const httpLink = createHttpLink({ uri: URI });
-
-const customLink = new ApolloLink((operation, forward) => {
+const authLink = new ApolloLink((operation, forward) => {
   const accessToken = getAccessToken();
   if (accessToken) {
     operation.setContext({
@@ -21,8 +23,28 @@ const customLink = new ApolloLink((operation, forward) => {
   return forward(operation);
 });
 
+function isSubscriptions(operation) {
+  const definition = getMainDefinition(operation.query);
+  return (
+    definition.kind === Kind.OPERATION_DEFINITION &&
+    definition.operation === OperationTypeNode.SUBSCRIPTION
+  );
+}
+
+const wsLink = new GraphQLWsLink(
+  createWsClient({
+    url: "ws://localhost:9000/graphql",
+    connectionParams: () => ({
+      accessToken: getAccessToken(),
+    }),
+  })
+);
+
+const URI = "http://localhost:9000/graphql";
+const httpLink = concat(authLink, createHttpLink({ uri: URI }));
+
 export const apolloClient = new ApolloClient({
-  link: concat(customLink, httpLink),
+  link: split(isSubscriptions, wsLink, httpLink),
   cache: new InMemoryCache(),
   // defaultOptions: {
   //   query: {
@@ -95,4 +117,34 @@ export const createJobMutation = gql`
     }
   }
   ${jobDetailFragment}
+`;
+
+export const messagesQuery = gql`
+  query MessagesQuery {
+    messages {
+      id
+      user
+      text
+    }
+  }
+`;
+
+export const addMessageMutation = gql`
+  mutation AddMessageMutation($text: String!) {
+    message: addMessage(text: $text) {
+      id
+      user
+      text
+    }
+  }
+`;
+
+export const messageAddedSubscription = gql`
+  subscription MessageAddedSubscription {
+    message: messageAdded {
+      id
+      user
+      text
+    }
+  }
 `;

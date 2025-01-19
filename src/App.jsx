@@ -8,6 +8,7 @@ import CreateJobPage from "./pages/CreateJobPage";
 import HomePage from "./pages/HomePage";
 import JobPage from "./pages/JobPage";
 import LoginPage from "./pages/LoginPage";
+import Chat from "./pages/Chat";
 
 function App() {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ function App() {
           <Route path="/jobs/new" element={<CreateJobPage />} />
           <Route path="/jobs/:jobId" element={<JobPage />} />
           <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+          <Route path="/chat" element={<Chat />} />
         </Routes>
       </main>
     </>

@@ -8,6 +8,7 @@ const JOBS_PER_PAGE = 5;
 
 function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
+  // const [mutate] = useMutation();
   const { data, error } = useQuery(jobQuery, {
     variables: {
       limit: JOBS_PER_PAGE,
